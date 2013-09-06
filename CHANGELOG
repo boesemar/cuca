@@ -1,0 +1,72 @@
+* 2013/xx/xx - 0.10
+   - Ruby 1.9 support
+   - functional tests
+
+* 2009 - 2013 ... big gap of changes done without publishing anything... ;)
+
+* 2009/xx/xx - 0.07
+   - 'stop' option :cancel_execution added. This can be raised in before filters
+     and will avoid that the run/get/post... methods are called.
+   - ARFormWidget will set attribites by the setter method which allows
+     overwriting within the model
+   - Minor Bugfixes
+   - Added subcall? method to controller to easily detect subcalls
+
+
+* 2009/03/04 - 0.06
+   - Fixed sorting bug of filters with priority specified
+   - Nicer pagination on listwidget for large lists
+   - Allowing to tune default query definitions on listwidget 
+   - Fixed bad rescue of NameError which resulted in misleading exception tracebacks
+   - Catch exceptions on loading/parsing the controller code
+   - Changed FormWidget and ARFormWidget, added FormElements module
+   - 'stop' can switch off after filters with :no_after_filters option
+   - Console will automatically load root support files
+   - Delete method for session.page variables
+
+* 2008/08/20 - 0.05
+   - Widget definition can be done within the action controller file.
+   - Fixed minor typos in application skeleton conf/config.rb
+   - Fix to catch exceptions in conf/config and conf/environment
+   - Fixes & minor changes in stdlib/form
+   - Stdlib listwidget rewrite_hooks will pass named hash instead of plain array 
+     as row data
+   - fixed script/console to load support files
+
+* 2008/06/17 - 0.04
+   - Fixed error-message displaying traceback but not the actual exception
+   - Display trace if enabled on 'stop :error' events
+   - Option for autoloading support files (instead of bulk 'require')
+   - Fixed bug where session didn't close (saved to disk) if 'stop' was raised (fastcgi)
+   - 'url', 'base_path and 'path_tree' property added into urlmap class
+   - Priority option on filters.
+   - Mount option for external directories on application path
+   - Cleanup app.rb, removed some global variables
+   - get/post parameters are automaticaly visible within the session page container
+   - Added some unit tests
+   - Minor fixes in stdlib
+   - Some fixes in dispatchers
+
+
+* 2008/05/18 - 0.03
+   - Fixed uncaught possible routing error exception
+   - Splitted load configuration to conf/config.rb and conf/environment.rb
+   - Allow setting the mime-type and http return status per controller action
+   - Added http 404 and 500 customizable error messages
+   - Option to switch off error tracebacks displayed in browser
+   - 'base_url' property added into the urlmap class
+   - Added 'layout' instance method within controller to overwrite 
+     or disable default layout for current action
+   - fixed bug on fastcgi where the 'stop' method could remove the layout 
+     definition from controller class
+   - Minor changes/fixes in application skeleton
+
+* 2008/05/11 - 0.02
+   - Fixed bug in erb/view generator ("can't find view path")
+   - stdlib/listwidget:
+         - Fixed table joins not displaying content (dblist)
+         - Dynamic column sorting in both directions (ASC/DESC)
+   - Fixed session bug when using fastcgi
+   - minor documentation and stdlib improvements 
+
+* 2008/05/08 - 0.01 - Initial Release

@@ -1,0 +1,12 @@
+
+* Complete unit testing framework, simulate calls with request/query parameters, 
+  cookies etc..
+* Write more unit tests for the framework and stuff in stdlib
+* Complete rdoc, fix formattings
+* Catch all application errors (syntax errors) if possible on runtime and
+  display them correctly in the browser and stderr
+* Work on a better stdlib (looks like an example collection atm)
+* Create a nicer website (cuca.rubyforge.net), add some screencasts ;)
+* Create a nicer application skeleton init screen with demo unit tests
+* Mount option for single files (not just directories)
+* Write a complete TODO list ;-)

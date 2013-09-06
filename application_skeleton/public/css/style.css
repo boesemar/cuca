@@ -1,0 +1,27 @@
+.list table {
+  font-size: 10pt;
+}
+
+.list .hl a {
+ display: block;
+ background-color: gray;
+ text-decoration: none;
+ font-weight: bold;
+ color:white;
+}
+
+
+h1 {
+  border-bottom: 1px solid gray;
+  font-size: 15pt;
+}
+
+h2 {
+  border-bottom: 1px solid gray;
+  font-size: 12pt;
+}
+
+small {
+  color: gray;
+}
+

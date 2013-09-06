@@ -1,0 +1,21 @@
+Welcome to the Cuca Framework
+
+Directory Layout:
+
+app     - Place your application here
+conf    - Your script configs and environment.rb file
+lib     - Is in your load path
+public  - Point your webserver to this directory
+log     - Cuca framework log directory (should be writable by the webserver)
+scripts - Tools to run/debug/test cuca
+tests   - application tests
+
+
+To get started:
+
+1. Run ./script/server-webrick.rb and open http://localhost:2000/
+2. See http://cuca.rubyforge.org/ for more information
+
+
+Questions/Comments/Suggestions are welcome: Email boesemar@gmx.de or
+use the rubyforge cuca project forum.

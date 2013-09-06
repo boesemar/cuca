@@ -1,0 +1,47 @@
+#!/usr/bin/ruby
+#
+# This is a simple script to install the cuca application skeleton
+# provided by the cuca gems.
+#
+begin 
+  require 'ftools'
+rescue LoadError
+end
+
+require 'fileutils'
+
+if ARGV.size == 0 then
+ $stderr.puts "Usage #{__FILE__} [directory of application]"
+ exit
+end
+
+framework_path = File.dirname(__FILE__)+"/../application_skeleton/"
+
+appname = ARGV[0]
+
+puts "Createing application skeleton in #{appname}"
+
+
+Dir.glob("#{framework_path}/**/*").each do |file|
+ fname = file[framework_path.length..-1]
+ dname = "#{appname}/#{fname}"
+
+ if File.exists?(dname) then
+   puts "(exists)  #{fname}"
+   next
+ end
+
+ if File.directory?(file) then
+   puts "(mkdir)   #{fname}"
+   FileUtils.mkdir_p(dname)
+   next
+ end
+
+ puts "(install) #{fname}"
+ FileUtils.install(file, dname)
+
+ if fname.include?('/scripts/server') || fname.include?('/public/dispatch') || fname.include?('/scripts/console') then
+  puts "(chmod)    #{fname} (755)"
+  FileUtils.chmod(33261, dname)
+ end
+end
