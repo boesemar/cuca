@@ -42,7 +42,11 @@ Cuca::App.configure do |config|
 
   ### the view generator will look for external templates here:
   # config.view_directory = 'app/_views'	
-
+  
+  ### Force encoding of views to this one, if undefined default external
+  ### encoding will be used. Encoding name must be accepted by Ruby Encoding class
+  # config.view_encoding = 'UTF-8'
+  
   ### 404 (file not found) and 500 system error page (relative to the public folder)
   # config.http_404 = '404.html'
   # config.http_500 = '500.html'

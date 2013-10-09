@@ -44,15 +44,17 @@ module View
   # This will return the generated markup as a string
   def viewtext(filename=nil)
     view_dir = $cuca_path + '/' + App::config['view_directory']
-    begin
-       f = File.open(view_dir + "/#{filename}", 'r')
-    rescue => e
-       return "Error opening template: #{e}"
-    end
-   
-    template = f.read
-    f.close
 
+    begin
+       template = File.read(view_dir + "/#{filename}")
+    rescue => e
+       return "Error reading template: #{e}"
+    end
+
+    if RUBY_VERSION > '1.8' && Cuca::App.config['view_encoding'] then
+      template.force_encoding(Cuca::App.config['view_encoding'])
+    end
+ 
     viewtext_p(template)
   end
 
