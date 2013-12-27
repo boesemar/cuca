@@ -24,6 +24,9 @@ Cuca::App.configure do |config|
   ### in lower levels of your directory layout.
   config.include_directories = %w{_controllers _layouts _models _widgets}
 
+  # How to name the controller class in a file (make sure this matches include_directories if you want autoload
+  # config.controller_naming = lambda { |f| f.capitalize+"Controller" }  # <= the default
+
   ### This would be an autoload configuration
   # config.include_directories = [
   #    { :dir => '_controllers', :class_naming => lambda { |f| f.capitalize+'Controller' } },

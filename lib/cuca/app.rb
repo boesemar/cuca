@@ -224,8 +224,12 @@ class App
   load_support_files(@urlmap)
 
   # 4th: Now let's run the actual page script code
-  controller_class_name = @urlmap.action.capitalize+"Controller"
-  
+  if Cuca::App.config['controller_naming'] then
+    controller_class_name = Cuca::App.config['controller_naming'].call(@urlmap.action)
+  else
+    controller_class_name = @urlmap.action.capitalize+"Controller"
+  end
+
   # Clear all hints
   Widget::clear_hints()
 
@@ -237,7 +241,7 @@ class App
   begin
      # load controller
      begin
-        controller_module.module_eval(File.open(script).read, script)  unless \
+        controller_module.module_eval(File.read(script), script)  unless \
                     controller_module.const_defined?(controller_class_name.intern)
      rescue SyntaxError => e
           err = get_error("Load Error", e, 
