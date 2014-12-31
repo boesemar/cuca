@@ -1,13 +1,52 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
+#
+# This will create a simple FastCGI lighttpd config file and run against the cuca application
+#
+
+require 'ostruct'
+require 'optparse'
+
+options = OpenStruct.new
+options.dispatcher = 'dispatch.fcgi'
+options.port       = 2000
+options.lighttpd   = 'lighttpd'
+
+op = OptionParser.new do |opts|
+	opts.banner = "Usage: server-lighttpd-fcgi.rb [options]"
+	opts.on("-pPORT", "--port=NAME", "TCP Port to listen on (2000)") do |x|
+		options.port = x
+	end
+
+	opts.on("-lPROGRAM", "--lighttpd=PROGRAM", "The lighttpd binary (/usr/sbin/lighttpd)") do |d|
+		options.lighttpd = d
+	end
+
+	opts.on("-dDISPATCHER", "--dispatcher=DISPATCHER", "The cgi program in public/ directory (dispatch.cgi)") do |d|
+		options.dispatcher = d
+	end
+	opts.on("-h", "--help", "Help") do 
+		puts opts 
+		exit 0
+	end
+end.parse!(ARGV)
+
+
+cuca_path = File.expand_path(File.dirname(__FILE__))+"/../"
+
+if !File.exist?(cuca_path + "/public/" + options.dispatcher) then
+   STDERR.puts "Can't find dispatcher #{options.dispatcher} in public directory, use -d"
+   exit 1
+end
+
 
 cuca_path = File.expand_path(File.dirname(__FILE__)+"/../")
 document_root = "#{cuca_path}/public/"
 error_log = "#{cuca_path}/log/error.log"
 access_log = "#{cuca_path}/log/access.log"
 pid_file = '/tmp/lighttpd.pid'
-dispatcher = "dispatch.fcgi"
-server_port = 2000
-server_program = "/usr/sbin/lighttpd"
+dispatcher = options.dispatcher
+server_port = options.port
+server_program = options.lighttpd
 
 config = <<-EOF
 

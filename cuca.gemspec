@@ -3,7 +3,7 @@ require 'rubygems'
 SPEC = Gem::Specification.new do |s|
 
  s.name		= 'cuca'
- s.version	= '0.10'
+ s.version	= '0.11'
  s.author	= 'Martin Boese'
  s.email	= 'boesemar@gmx.de'
  s.rubyforge_project = 'cuca'

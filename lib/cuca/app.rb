@@ -243,10 +243,10 @@ class App
      begin
         controller_module.module_eval(File.read(script), script)  unless \
                     controller_module.const_defined?(controller_class_name.intern)
-     rescue SyntaxError => e
-          err = get_error("Load Error", e, 
+     rescue SyntaxError,LoadError => e
+          err = get_error("Can not load script", e, 
           Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
-          @cgi.out('status' => 'SERVER_ERROR') { err }
+          @cgi.out('status' => 'SERVER_ERROR') { err }          
           return                    
      end
 

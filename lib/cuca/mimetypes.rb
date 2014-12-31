@@ -1,5 +1,7 @@
 module Cuca
 
+#  This code whould take the data from /etc/mine.types, but not present on all systems
+#  
 #
 # MimeTypes is a self-writing hash.
 # Will take the data of the mime.types file
