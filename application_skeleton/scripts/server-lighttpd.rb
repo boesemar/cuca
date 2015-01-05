@@ -35,8 +35,6 @@ op = OptionParser.new do |opts|
 	end
 end.parse!(ARGV)
 
-puts options.inspect
-
 
 if !File.exist?(options.ruby_interpreter) then
    STDERR.puts "Can't find ruby interpreter, use -i"

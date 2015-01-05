@@ -72,7 +72,7 @@ class App
    @public_path.freeze
    @log_path.freeze
    @logger      = Logger.new("#{@log_path}/messages")
-   @logger.level = App::config['log_level'] || Logger::WARN
+   @logger.level = App.config['log_level'] || Logger::WARN
  end
 
 

@@ -1,3 +1,7 @@
+* 2014/12/31 - 0.11
+   - Few fixes & cleanup
+   - Ruby 2.1.0 support
+
 * 2013/xx/xx - 0.10
    - Ruby 1.9 support
    - functional tests
