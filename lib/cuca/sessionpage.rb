@@ -29,7 +29,7 @@ class SessionPage
    @ses[:SessionPage] ||= {}
    pagemem[pagekey] ||= {}
    pagemem[pagekey][LAKEY] = Time.now
-   session.cgi.parameters.each_pair { |k,v|  self[k] = v if v.kind_of?(String) } 
+   session.cgi.parameters.each_pair { |k,v|  self[k] = v.dup if v.kind_of?(String) } 
    expire
  end
 
