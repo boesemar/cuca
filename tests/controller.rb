@@ -13,6 +13,16 @@ class TestAController < Cuca::Controller
   def post
     @_content = 'POST'
   end
+  def delete
+    @_content = 'DELETE'
+  end
+  def patch
+    @_content = 'PATCH'
+  end
+  def head
+   @_content = 'HEAD'
+  end
+
 end
 class TestBController < Cuca::Controller
   def run
@@ -54,11 +64,11 @@ class FilterController < Cuca::Controller
  def filter_pri
    @filter = ['zero']
  end
- 
+
  def afilter_pri
    @_content << ')'
  end
- 
+
 
  def filter_one
    @filter << 'one'
@@ -103,8 +113,8 @@ end
 
 
 class ChainAController < Cuca::Controller
-  before_filter 'a', 1  
-  def a 
+  before_filter 'a', 1
+  def a
     @out ||= ''
     @out << 'a'
   end
@@ -131,17 +141,17 @@ end
 
 class StopFilterController < Cuca::Controller
   before_filter 'stop_it'
-  
+
   def stop_it
      stop :cancel_execution => true
   end
-  
+
   def run
       raise "Never got here"
   end
 end
-        
-        
+
+
 
 class ControllerTests < Test::Unit::TestCase
 
@@ -155,6 +165,13 @@ class ControllerTests < Test::Unit::TestCase
     a = TestAController.new
     a._do('post')
     assert_equal 'POST', a.to_s
+    a._do('delete')
+    assert_equal 'DELETE', a.to_s
+    a._do('patch')
+    assert_equal 'PATCH', a.to_s
+    a._do('head')
+    assert_equal 'HEAD', a.to_s
+
 
     b = TestBController.new
     b._do('run')
@@ -211,6 +228,6 @@ class ControllerTests < Test::Unit::TestCase
   def test_stop_in_filter
     c = StopFilterController.new
     c.run_before_filters
-    c._do('run') 
+    c._do('run')
   end
 end

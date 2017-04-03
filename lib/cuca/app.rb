@@ -5,7 +5,7 @@ require 'cuca/config'
 def cuca_register_autoload(object, file)
  autoload(object, file)
 end
- 
+
 
 module Cuca
 
@@ -21,16 +21,24 @@ class Sandbox
    controller_class = mod::const_get(controller_class_name)
    controller = controller_class.send(:new, :assigns=>assigns)
    $controller_object = controller
-   
+
    controller.run_before_filters
 
-
-   controller.send('_do'.intern, 'run', subcall)
    case request_method
-       when 'POST' 
+       when 'POST'
+            controller.send('_do'.intern, 'run', subcall)
             controller.send('_do'.intern, 'post', subcall)
-       when 'GET' 
+       when 'GET'
+            controller.send('_do'.intern, 'run', subcall)
             controller.send('_do'.intern, 'get', subcall)
+       when 'PUT'
+            controller.send('_do'.intern, 'put', subcall)
+       when 'PATCH'
+            controller.send('_do'.intern, 'patch', subcall)
+       when 'HEAD'
+            controller.send('_do'.intern, 'head', subcall)
+       when 'DELETE'
+             controller.send('_do'.intern, 'delete', subcall)
    end
 
    controller.run_after_filters
@@ -40,11 +48,11 @@ class Sandbox
 end
 
 # == Cuca Application
-# 
-# A Cuca::App object will be created directly by the dispatcher - which again is the 
+#
+# A Cuca::App object will be created directly by the dispatcher - which again is the
 # direct cgi or fastcgi script that get run by the webserver.
-# Normally you just create a Cuca::App object and run the cgicall method with optional with 
-# a cgi object as paramenter. 
+# Normally you just create a Cuca::App object and run the cgicall method with optional with
+# a cgi object as paramenter.
 # Before doing that you must set $cuca_path to the root of your application directory structure.
 class App
 
@@ -82,7 +90,7 @@ class App
  private
  def init_call(path_info)
    require 'cuca/urlmap'
-   
+
    begin
      @urlmap = URLMap.new(@app_path, path_info)
 
@@ -91,7 +99,7 @@ class App
       return
    end
  end
- 
+
  # will do a 'require' on all .rb files in path
  private
  def include_files(path)
@@ -131,13 +139,13 @@ class App
  def all_support_directories(path_tree)
    path_tree.each do |t|
        (App::config['include_directories'] || []).each do |id|
-          if id.instance_of?(Hash) then 
+          if id.instance_of?(Hash) then
               yield "#{t}/#{id[:dir]}", id[:class_naming]
-          else 
+          else
 	      yield "#{t}/#{id}", nil
           end
        end
-   end  
+   end
  end
 
  public
@@ -147,7 +155,7 @@ class App
         autoload_files(dir, proc)
      else
         include_files(dir)
-     end   
+     end
    end
  end
 
@@ -176,7 +184,7 @@ class App
  public
  def cgicall(cgi = nil)
   @cgi = cgi || CGI.new
-  
+
   #
   # 1st priority: Serve a file if it exists in the 'public' folder
   #
@@ -244,10 +252,10 @@ class App
         controller_module.module_eval(File.read(script), script)  unless \
                     controller_module.const_defined?(controller_class_name.intern)
      rescue SyntaxError,LoadError => e
-          err = get_error("Can not load script", e, 
+          err = get_error("Can not load script", e,
           Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
-          @cgi.out('status' => 'SERVER_ERROR') { err }          
-          return                    
+          @cgi.out('status' => 'SERVER_ERROR') { err }
+          return
      end
 
      # Catch a common user error
@@ -256,13 +264,13 @@ class App
 
 
      # run controller
-     (status, mime, content, headers) = Sandbox.run(controller_class_name, 
-                           @urlmap.action_module, @urlmap.assigns, 
+     (status, mime, content, headers) = Sandbox.run(controller_class_name,
+                           @urlmap.action_module, @urlmap.assigns,
                            @cgi.request_method, @urlmap.subcall)
 
      logger.debug "CGICall OK: #{status}/#{mime}"
-     
-     
+
+
      @cgi.out(headers.merge( { 'type' => mime, 'status' => status} )) {content}
 
   rescue SyntaxError => e
@@ -272,7 +280,7 @@ class App
 
       logger.info "CGICall Syntax Error"
       return
-     
+
 
   rescue Cuca::ApplicationException => e
       err = get_error("Application Error", e,
@@ -283,13 +291,13 @@ class App
       return
 
   rescue => e
-      err = get_error("System Error", e, 
+      err = get_error("System Error", e,
               Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
       @cgi.out('status' => 'SERVER_ERROR') { err }
 
       logger.info "CGICall System Error"
-      return 
- 
+      return
+
   end
  end
 

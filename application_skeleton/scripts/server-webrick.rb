@@ -20,7 +20,7 @@ class CucaHandler < WEBrick::HTTPServlet::CGIHandler
 end
 
 server = WEBrick::HTTPServer.new(:Port => 2000)
-server.mount("/", CucaHandler, File.expand_path(File.dirname(__FILE__))+"/../public/dispatch-fwdev.cgi")
+server.mount("/", CucaHandler, File.expand_path(File.dirname(__FILE__))+"/../public/dispatch.cgi")
 
 trap("INT"){ server.shutdown }
 server.start

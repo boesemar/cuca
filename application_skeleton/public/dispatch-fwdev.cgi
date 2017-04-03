@@ -1,5 +1,7 @@
-#!/usr/bin/ruby1.9.1
+#!/usr/bin/env ruby
 
+
+### Define framework path
 FRAMEWORK_PATH = '/home/bones/workspace/cuca_svn/cuca/lib'
 
 $cuca_path = File.dirname(__FILE__)+"/../"

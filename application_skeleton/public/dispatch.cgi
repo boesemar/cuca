@@ -1,4 +1,4 @@
-#!/usr/bin/ruby1.9
+#!/usr/bin/env ruby
 
 $cuca_path = File.dirname(__FILE__)+"/../"
 
