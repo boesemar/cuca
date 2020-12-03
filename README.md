@@ -40,9 +40,9 @@ Cuca was written for internal use in 2008 and as per 2013 we keep using and impr
 
     cuca my_project		# this will create a new project
     cd my_project
-    ruby ./script/server-webrick.rb
+    rackup
 
-  Open http://localhost:2000/
+  Open http://localhost:9292/
 
 
 ## Read on
