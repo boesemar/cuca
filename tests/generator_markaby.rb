@@ -79,6 +79,26 @@ class TestMabGWidget < Cuca::Widget
   end
 end
 
+class TestTextReturnsWidget < Cuca::Widget
+  include Cuca::Generator::Markaby
+  
+  def world
+    "world"
+  end
+  
+  def hello
+    "hello"
+  end
+  
+  def output
+    mab do 
+      hello
+      text " "
+      world
+    end
+  end
+end
+
 
 
 class TestGeneratorMarkaby < Test::Unit::TestCase
@@ -119,5 +139,8 @@ class TestGeneratorMarkaby < Test::Unit::TestCase
   assert_equal '<i><b>TestMe</b></i>', TestMabGWidget.new.to_s
  end
 
+ def test_text_returns
+   assert_equal 'hello world', TestTextReturnsWidget.new.to_s, "This only works with markaby < 0.8.0"
+ end
 
 end

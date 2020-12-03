@@ -39,6 +39,9 @@ class Sandbox
             controller.send('_do'.intern, 'head', subcall)
        when 'DELETE'
              controller.send('_do'.intern, 'delete', subcall)
+       when 'OPTIONS'
+             controller.send('_do'.intern, 'options', subcall)
+
    end
 
    controller.run_after_filters
@@ -161,10 +164,10 @@ class App
 
 
  # this will build an error message depending on configuration
- private
  def get_error(title, exception, show_trace = true, file=nil)
    err = "<h3>#{title}</h3>"
-   err << "<b>#{exception.class.to_s}: #{CGI::escapeHTML(exception.to_s)}</b><br/>"
+   err << "<b>#{exception.class.to_s}: #{CGI::escapeHTML(exception.to_s)}</b><br/><br/>"
+   err << "URL: #{@urlmap.url}<br>"
    $stderr.puts "ERROR: #{title} - #{exception.class.to_s}: #{exception.to_s}"
    if (show_trace) then
       exception.backtrace.each do |b|
@@ -181,124 +184,158 @@ class App
  end
 
 
- public
- def cgicall(cgi = nil)
-  @cgi = cgi || CGI.new
-
-  #
-  # 1st priority: Serve a file if it exists in the 'public' folder
-  #
-  file = @public_path + '/' + @cgi.path_info
-  if File.exists?(file) && File.ftype(file) == 'file' then
-    require 'cuca/mimetypes'
-    mt = MimeTypes.new
-    f = File.new(file)
-    extension = file.scan(/.*\.(.*)$/)[0][0] if file.include?('.')
-    extension ||= 'html'
-    mime = mt[extension] || 'text/html'
-    @cgi.out('type' => mime,
-             'expires' => (Time.now+App.config['http_static_content_expires'])) { f.read }
-    f.close
-    return
+  def status2code(cgi_status)
+    x = CGI::HTTP_STATUS[cgi_status]
+    x||= "500 unknown status: #{cgi_status.inspect}"
+    x.split(' ').first.to_i
   end
 
-  init_call(@cgi.path_info)
+  def sanitize_headers(headers)    
+    if headers['cookie'] then 
+        headers['set-cookie'] = headers['cookie'].to_s
+        headers.delete('cookie')
+    end
+    if headers['type'] then 
+      headers['content-type'] = headers['type'].to_s
+      headers.delete('type')
+    end
 
-  # If config (urlmap) couldn't find a script then let's give up
-  # with a file-not-found 404 error
-  if @urlmap.nil? then
-     begin
-      file = "#{@public_path}/#{Cuca::App.config['http_404']}"
-      c = File.open(file).read
-      @cgi.out('status' => 'NOT_FOUND', 'type' => 'text/html') { c }
-     rescue => e
-      @cgi.out('status' => 'NOT_FOUND', 'type' => 'text/html') { "404 - File not found!" }
-     end
-     return
+    headers
   end
 
-  logger.info "CGICall on #{@urlmap.url} - #{@urlmap.script}"
-  script = @urlmap.script
-
-  #
-  # 2nd: Check if we have a script for requested action
-  #
-  if (!File.exists?(script)) then
-    @cgi.out { "Script not found: #{script}" }
-    return
+  def rack_response(code, headers, content)
+    [code, sanitize_headers(headers), [content]]
   end
 
-  # 3rd: Load additional files
-  load_support_files(@urlmap)
-
-  # 4th: Now let's run the actual page script code
-  if Cuca::App.config['controller_naming'] then
-    controller_class_name = Cuca::App.config['controller_naming'].call(@urlmap.action)
-  else
-    controller_class_name = @urlmap.action.capitalize+"Controller"
-  end
-
-  # Clear all hints
-  Widget::clear_hints()
-
-  # Load the code of the action into the module
-  controller_module = @urlmap.action_module
-
-
-  # things fail in this block get error logged and/or displayed in browser
-  begin
-     # load controller
-     begin
-        controller_module.module_eval(File.read(script), script)  unless \
-                    controller_module.const_defined?(controller_class_name.intern)
-     rescue SyntaxError,LoadError => e
-          err = get_error("Can not load script", e,
-          Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
-          @cgi.out('status' => 'SERVER_ERROR') { err }
-          return
-     end
-
-     # Catch a common user error
-     raise Cuca::ApplicationException.new("Could not find #{controller_class_name} defined in #{script}") \
-          unless controller_module.const_defined?(controller_class_name.intern)
-
-
-     # run controller
-     (status, mime, content, headers) = Sandbox.run(controller_class_name,
-                           @urlmap.action_module, @urlmap.assigns,
-                           @cgi.request_method, @urlmap.subcall)
-
-     logger.debug "CGICall OK: #{status}/#{mime}"
-
-
-     @cgi.out(headers.merge( { 'type' => mime, 'status' => status} )) {content}
-
-  rescue SyntaxError => e
-      err = get_error("Syntax Error", e,
-              Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
-      @cgi.out('status' => 'SERVER_ERROR') { err }
-
-      logger.info "CGICall Syntax Error"
+  public
+  def rackcall(env)
+   @env = env
+   $env = env
+   @request = Rack::Request.new(env)
+   $request = @request
+ 
+   #
+   # 1st priority: Serve a file if it exists in the 'public' folder
+   #
+   file = @public_path + '/' + @request.path_info
+   if File.exists?(file) && File.ftype(file) == 'file' then
+     require 'cuca/mimetypes'
+     mt = MimeTypes.new
+     file_content = File.open(file) { |f| f.read }
+     extension = file.scan(/.*\.(.*)$/)[0][0] if file.include?('.')
+     extension ||= 'html'
+     mime = mt[extension] || 'text/html'
+     return rack_response(200, 
+        { 'type' => mime, 
+        'expires' => (Time.now+App.config['http_static_content_expires']).to_s }, 
+        file_content)
+   end
+ 
+   init_call(@request.path_info)
+ 
+   # If config (urlmap) couldn't find a script then let's give up
+   # with a file-not-found 404 error
+   if @urlmap.nil? then
+      begin
+       file = "#{@public_path}/#{Cuca::App.config['http_404']}"
+       c = File.open(file).read
+       return rack_response(404, {'content-type' => 'text/html'}, c)
+      rescue => e
+        return rack_response(404, {'content-type' => 'text/html'}, "404 - File not found!")
+      end
       return
+   end
+ 
+   logger.info "RackCall on #{@urlmap.url} - #{@urlmap.script}"
+   script = @urlmap.script
+ 
+   #
+   # 2nd: Check if we have a script for requested action
+   #
+   if (!File.exists?(script)) then
+     return [500, {}, ["Script not found: #{script}"]]
+   end
+ 
+   # 3rd: Load additional files
+   load_support_files(@urlmap)
+ 
+   # 4th: Now let's run the actual page script code
+   if Cuca::App.config['controller_naming'] then
+     controller_class_name = Cuca::App.config['controller_naming'].call(@urlmap.action)
+   else
+     controller_class_name = @urlmap.action.capitalize+"Controller"
+   end
+ 
+   # Clear all hints
+   Widget::clear_hints()
+ 
+   # Load the code of the action into the module
+   controller_module = @urlmap.action_module
+ 
+ 
+   # things fail in this block get error logged and/or displayed in browser
+   begin
+      # load controller
+      begin
+         controller_module.module_eval(File.read(script), script)  unless \
+                     controller_module.const_defined?(controller_class_name.intern)
+      rescue SyntaxError,LoadError => e
+           err = get_error("Can not load script", e,
+           Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
+           return [500, {}, [err]]
+      end
+ 
+      # Catch a common user error
+      raise Cuca::ApplicationException.new("Could not find #{controller_class_name} defined in #{script}") \
+           unless controller_module.const_defined?(controller_class_name.intern)
+ 
+ 
+      # run controller
+      (status, mime, content, headers) = Sandbox.run(controller_class_name,
+                            @urlmap.action_module, @urlmap.assigns,
+                            @request.request_method, @urlmap.subcall)
+ 
+      logger.debug "RackCall OK: #{status}/#{mime}"
+ 
+      #raise  headers.merge( { 'type' => mime, 'status' => status}).inspect
+      headers =  headers.merge( { 'content-type' => mime})
+      code = self.status2code(status)
+      return rack_response(code, headers, content)
+ 
+   rescue SyntaxError => e
+       err = get_error("Syntax Error", e,
+               Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
+       logger.info "CGICall Syntax Error"
+       return rack_response(500, {}, err)
+ 
+ 
+   rescue Cuca::ApplicationException => e
+       err = get_error("Application Error", e,
+               Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
+ 
+       logger.info "CGICall Application Error"
+       return rack_response(500, {'content-type' => 'text/html'}, err)
+ 
+   rescue => e
+       err = get_error("System Error", e,
+               Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
+        logger.info "CGICall System Error"
+
+        return rack_response(500, {'content-type' => 'text/html'}, err)
+ 
+   end
 
 
-  rescue Cuca::ApplicationException => e
-      err = get_error("Application Error", e,
-              Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
-      @cgi.out('status' => 'SERVER_ERROR') { err }
 
-      logger.info "CGICall Application Error"
-      return
 
-  rescue => e
-      err = get_error("System Error", e,
-              Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
-      @cgi.out('status' => 'SERVER_ERROR') { err }
 
-      logger.info "CGICall System Error"
-      return
 
-  end
+
+
+
+
+
+
  end
 
 end

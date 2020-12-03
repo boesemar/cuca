@@ -17,7 +17,7 @@ end
 
 # To require config and environment
 def init_save_require(filename)
- begin 
+ begin
    require filename
  rescue  LoadError => e
    title = "INIT Error [#{filename}]: #{e}"
@@ -56,4 +56,3 @@ require 'cuca/controller'
 require 'cuca/layout'
 
 init_save_require($cuca_path+'/conf/environment')
-

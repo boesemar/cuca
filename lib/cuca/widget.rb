@@ -69,7 +69,12 @@ class Widget
   
   # An accessor to the global cgi variables
   def cgi
-   $app.cgi
+    $request
+#   $app.cgi
+  end
+
+  def request
+    $request
   end
 
   # An accessor to the global logger variables
@@ -86,22 +91,26 @@ class Widget
   # an accessor to cgi.parameters variables. This is NOT params from the CGI class 
   # (see cgi_fix)
   def params
-    $app.cgi.parameters
+    $request.params
+#    $app.cgi.parameters
   end
   
   # accessor to cgi query parameters (http GET)
   def query_parameters
-     $app.cgi.query_parameters
+    $request.GET
+#     $app.cgi.query_parameters
   end
   
   # accessor to the cgi request parameters (http POST)
   def request_parameters
-    $app.cgi.request_parameters
+    $request.POST
+#    $app.cgi.request_parameters
   end
   
   # an accessor to request_method
   def request_method
-    return $app.cgi.request_method
+    $request.request_method
+#    return $app.cgi.request_method
   end
 
   # Escape a string to use with URL etc..

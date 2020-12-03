@@ -1,171 +1,165 @@
 
-require 'cgi/session'
-require 'cgi/session/pstore'
-
 require 'cuca/app'
 require 'cuca/widget'
-require 'cuca/sessionflash'
-require 'cuca/sessionpage'
 
 module Cuca
 
 
 # == Description
-# Session can be used to store stateful data. It is not loaded by default, to make
-# use of it you must require this module and tell a controller to use a session.
 #
-# == Example Use (permanent data)
+# Session is used to statefull data
 #
-# Initialize (using a controller):
+# But cuca doesn't help you anymore with saving a it server-side or making cookies.
+# This is simply a wrapper around a hash that you need to keep yourself either with the 
+# Rack Session middleware or your own implementation.
 #
-#  class ApplicationController < Cuca::Controller
-#    use_session
-#  end
+# == Example of use with the Rack Session Middlware
+# require 'cuca/session'
 #
-# Save and Load data (from any widgets e.g. controller):
+# class SessionController < ApplicationController
+#   before_filter :session_start
 #
-#  class IndexController < ApplicationController
-#
-#    def run
-#       session[:stuff_to_remember] = "hello world"
-#       @stuff = session[:stuff_to_remember]
-#    end
+#   def session_start
+#       @session = Cuca::Session.new(request, request.session)
+#   end
+#   def session
+#       @session
+#   end
 # end
 #
-# == Flash Memory
-#
-# The flash memory can be used to store temporarily data for the current and
-# next action. A typical example are messages after a post event, like:
-#
-#  class LoginController < ApplicationController
-#      (...)
-#     def post
-#         if (params['username'] == 'root' && params['pass'] == 'stuff') then 
-#            session.flash[:message] = "You are logged in"
-#            session[:username] = 'root'
-#            stop :redirect => 'index'
-#         end
-#     end
+# class IndexController < SessionController
+#   def run
+#      session.page['something'] = "some other thing"   # a variable only available to this page
+#   end
 #  end
+
+# Flash Memory - will only be kept for the next next time you render a page (good for messages before a redirect)
+
+
+class SessionFlash
+  def initialize(data)
+    @data = data
+    @rootkey = 'session-flash'
+    @data[@rootkey] ||= {}
+  end
+  def memory
+    @data[@rootkey]
+  end
+  def [](key)
+    item = @data[@rootkey][key]
+    return nil unless item
+    @data[@rootkey].delete(key)
+    item
+  end
+  def []=(key, value)
+    @data[@rootkey][key] = value
+  end
+end
+
+# SessionPage keeps data just for the current page (URL!)
 #
-# If you want to keep the flash memory for another cycle you can call:
-#
-#  session.flash.keep
-#
-#
-# == Page Memory
-#
-# Page memory is a container to store data only valid for the current action.
-# It will be erased once you leave to a different action.
-# Current request and query parameters (get/post) are automatically available in this
-# container.
-#
-#
-# 
-# == Configuration
-#
-# Session is using some values from App::Config :
-#
-# 'session_prefix'
-# 'session_valid'
-# 'session_key'
-#
+# session-page
+#   Pk_/some/path
+#      data => value
+#      data2 => value
+#   Expire
+#      pk_/some/data => Timestamp
+
+class SessionPage
+  def pagekey
+    "Pk_#{@request.path_info}".intern
+  end
+ 
+  def delete(key)
+    @data[@rootkey].delete(@pagekey)
+    @data[@rootkey][@expirekey].delete(@pagekey)
+  end
+
+  # delete all from current page memory 
+  def reset
+    @data[@rootkey][@pagekey] = {}
+  end
+ 
+  # access to pagemem
+  def memory
+    @data[@rootkey][@pagekey]
+  end
+
+  def initialize(data,request)
+    @data = data
+    @request = request
+    @rootkey = 'session-page'
+    @expirekey = 'Expire'
+    @pagekey = "Pk_#{@request.path_info}".intern
+    @data[@rootkey] ||= {}
+    @data[@rootkey][@pagekey] ||= {}
+    @data[@rootkey][@expirekey] ||= {}
+    @data[@rootkey][@expirekey][@pagekey] = (Time.now + (4*3600)).to_i
+    @data[@rootkey][@expirekey].each do |pk, timestamp|
+      next if pk == @pagekey
+      if timestamp <= Time.now.to_i - (3600*4) then 
+        @data[@rootkey].delete(pk)
+        @data[@rootkey][@expirekey].delete(pk)
+      end
+    end
+    #preload GET/POST
+    request.params.each do |k,v|
+      @data[@rootkey][@pagekey][k] = v
+    end
+  end
+
+  def [](key)
+    @data[@rootkey][@pagekey][key]
+  end
+
+  def []=(key,val)
+    @data[@rootkey][@pagekey][key] = val
+  end
+end
+
 class Session
- attr_reader :flash
- attr_reader :page
- attr_reader :cgi
+  attr :data
 
- private
- def make_session
-   @sess = CGI::Session.new(@cgi, @session_parameters)
- end
-
- public
- def reset
-   begin
-     @sess.delete
-   rescue
-   end
-   make_session
- end
-
-
- # returns true/false if a session exists
- def exists?
-   begin
-      p = @session_parameters.clone
-      p['new_session'] = false
-      session = CGI::Session.new(cgi, p)
-   rescue ArgumentError
-      return false
-   end
-   return true
- end
-
- def initialize(cgi)
-   @cgi = cgi
-
-   @session_parameters = {
-          'database_manager' => CGI::Session::PStore,
-          'session_key' => App::config["session_key"],
-          'session_path' => '/',
-#          'new_session' => false,
-          'session_expires' => Time.now + App::config["session_valid"].to_i,
-          'prefix' => App::config["session_prefix"] }
-
-   make_session
-
-
-   @flash = SessionFlash.new(self)
-   @page  = SessionPage.new(self)
- end
-
- def []=(key, value) 
-   @sess[key] = value
- end
- 
- def [](key)
-   return @sess[key]
- end
-
- def close
-   @sess.close
- end
-
- def update
-   @sess.update
- end
- 
- def delete
-   @sess.delete
- end
-
- 
-end
-
-class Controller
-  # This will create filters that initialize the session before the action and
-  # close it afterwards.
-  def self.use_session
-     priority_before_filter('ses_initialize_session')
-     priority_after_filter('ses_close_session')
+  def initialize(request, initial_data=nil)
+    if !initial_data then 
+      if !request.session then 
+        raise "Session not available load Rack Middleware"
+      end
+      @data = request.session
+    else
+      @data = initial_data
+    end
+    @request = request
   end
 
-  def ses_initialize_session
-    $session = Session.new($app.cgi)
+  def encode
+    @data.to_json
   end
-  def ses_close_session
-    $session.close
-#    $session = nil
+
+  def decode(raw_data)
+    @data = JSON.parse(raw_data)
+  end
+
+  def [](key)
+    @data[key]
+  end
+
+  def []=(key,val)
+    raise "Reserved key" if key == 'session-page'
+    raise "Reserved key" if key == 'session-flash'
+    @data[key] = val
+  end
+
+  def page
+    @page ||= SessionPage.new(@data, @request)
+    @page
+  end
+  def flash
+    @flash ||= SessionFlash.new(@data)
+    @flash
   end
 end
-
-
-class Widget
-  def session
-     $session
-  end
-end
+  
 
 end
 
