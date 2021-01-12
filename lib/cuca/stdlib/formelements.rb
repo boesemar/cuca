@@ -103,7 +103,7 @@ end
     falsename = attribs[:false] || 'false'
     trueval = attribs.has_key?(:trueval) ? attribs[:trueval] : 't'
     falseval = attribs.has_key?(:falseval) ? attribs[:falseval] : 'f'
-    $stderr.puts "#{name}: #{v[name].inspect} #{trueval.inspect} #{falseval.inspect}"
+#    $stderr.puts "#{name}: #{v[name].inspect} #{trueval.inspect} #{falseval.inspect}"
     attribs.delete(:true)
     attribs.delete(:false)
     attribs.delete(:trueval)

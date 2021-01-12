@@ -61,7 +61,7 @@ class App
 
 
  attr_reader :app_path, :log_path, :public_path, :urlmap, :cgi, :logger
-
+ def logger=(log); @logger = log ; end
  @@app_config = Cuca::Config.new
 
  ## Application configuration
@@ -168,10 +168,10 @@ class App
    err = "<h3>#{title}</h3>"
    err << "<b>#{exception.class.to_s}: #{CGI::escapeHTML(exception.to_s)}</b><br/><br/>"
    err << "URL: #{@urlmap.url}<br>"
-   $stderr.puts "ERROR: #{title} - #{exception.class.to_s}: #{exception.to_s}"
+#   $stderr.puts "ERROR: #{title} - #{exception.class.to_s}: #{exception.to_s}"
    if (show_trace) then
       exception.backtrace.each do |b|
-         $stderr.puts "   #{b}"
+#         $stderr.puts "   #{b}"
          err +="<br/>#{b}"
       end
    else

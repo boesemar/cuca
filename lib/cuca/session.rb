@@ -1,4 +1,3 @@
-
 require 'cuca/app'
 require 'cuca/widget'
 
@@ -67,7 +66,15 @@ end
 
 class SessionPage
   def pagekey
-    "Pk_#{@request.path_info}".intern
+    path_a = @request.path_info.split('/').find_all {|x| !x.empty?}
+    pk = @request.path_info.split('/').last 
+    
+    if pk =~ /^-(.+)-/ then   # strip subcalls
+      pk = $1
+    end
+    key = (path_a[0..-2].push(pk)).join('_')
+
+    "Pk_#{key}".intern
   end
  
   def delete(key)
@@ -90,7 +97,7 @@ class SessionPage
     @request = request
     @rootkey = 'session-page'
     @expirekey = 'Expire'
-    @pagekey = "Pk_#{@request.path_info}".intern
+    @pagekey = self.pagekey
     @data[@rootkey] ||= {}
     @data[@rootkey][@pagekey] ||= {}
     @data[@rootkey][@expirekey] ||= {}

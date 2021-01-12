@@ -90,21 +90,6 @@ class WidgetTest < Test::Unit::TestCase
     assert_equal w2.hints, {}
  end
 
- def test_external_accessors
-   w = Cuca::Widget.new
-   assert w.app.instance_of?(Cuca::App)
-   assert w.log.instance_of?(Logger)
-
-   # these two are nil because we didn't run from cgi or from controller
-   assert w.cgi.nil?
-#    assert w.controller.nil?   # we can't test on this
-
-   require 'cuca/cgi_emu'
-   @app.cgicall(CGIEmu.new('PATH_INFO' => '/'))
-
-   assert w.cgi.kind_of?(CGI)
- end
-
  def test_assigns
    w = Cuca::Widget.new(:assigns => { 'p1' => 'test1', 'p2' => 'test2' })
 
