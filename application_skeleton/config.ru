@@ -3,7 +3,7 @@ require 'cuca'
 
 class CucaApplication
     def call(env)
-        Cuca::App.new.rackcall(env)
+        Cuca::App.new.rackcall
     end
 end
 

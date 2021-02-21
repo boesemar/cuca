@@ -1,3 +1,8 @@
+* 2021/02
+   - Urlmap rewrite
+
+* 2020/12 - Migrated to Rack, support until ruby 2.7
+
 * 2014/12/31 - 0.11
    - Few fixes & cleanup
    - Ruby 2.1.0 support

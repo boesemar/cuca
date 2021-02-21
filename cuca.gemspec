@@ -3,16 +3,16 @@ require 'rubygems'
 SPEC = Gem::Specification.new do |s|
 
  s.name		= 'cuca'
- s.version	= '0.20'
+ s.version	= '0.21'
  s.author	= 'Martin Boese'
- s.email	= 'boesemar@gmx.de'
+ s.email	= 'mboese@mailbox.org'
  s.rubyforge_project = 'cuca'
- s.homepage	= 'http://cuca.rubyforge.org/'
+ s.homepage	= 'https://github.com/boesemar/cuca'
  s.platform	= Gem::Platform::RUBY
  s.summary	= 'A widget-based web framework'
  s.license      = 'MIT'
  s.description = <<-EOD
-Cuca is a light web development framework that rack (CGI/FastCGI version < 0.2). It has 
+Cuca is a light web development framework for Ruby/Rack. It has 
 a widget-bases approach to reuse functionality and does not stricktly implement an MVC architecture, 
 although possible. Content can be generated directly by the controller with the help of external 
 widgets that can generate code using markaby, eruby or any other user implemented 'generator'. It 
