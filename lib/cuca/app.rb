@@ -127,17 +127,13 @@ module Cuca
 
         def load_support_files(scan_result)  # :nodoc:
             scan_result.path_tree.each do |pt|
-                puts "load_support_files: #{pt.inspect}"
                 (App::config['include_directories'] || []).each do |id|
-                    puts "...#{id}"
                     dir = id[:dir]
                     pro = id[:class_naming]
             
                     load_path = pt.children.find { |c| c.name == dir }      # raw finder
-                    puts "...found: #{load_path.inspect}"
                     if load_path then
                         load_path.children.each do |file|
-                            puts "...inside: #{file.inspect}"
                             next unless file.value[:type] == :file
                             if pro then 
                                 autoload_file(file, pro)
