@@ -52,7 +52,7 @@ class Widget
 
   # an accessor to the current controller object - if available, otherwise nil
   def controller
-    $controller_object || nil
+    $cuca.value[:controller_object] || nil
   end
 
   # Hints is shared a shared container for all widgets. If you want to pass an information
@@ -69,47 +69,47 @@ class Widget
   
   # An accessor to the global cgi variables
   def cgi
-    $request
+    $cuca.value[:request]
 #   $app.cgi
   end
 
   def request
-    $request
+    $cuca.value[:request]
   end
 
   # An accessor to the global logger variables
   def log
-   $app.logger
+   $cuca.value[:app].logger
   end
 
   # An accessor to the Cuca::app object
   def app
-   $app
+   $cuca.value[:app]
   end
   
 
   # an accessor to cgi.parameters variables. This is NOT params from the CGI class 
   # (see cgi_fix)
   def params
-    $request.params
+    $cuca.value[:request].params
 #    $app.cgi.parameters
   end
   
   # accessor to cgi query parameters (http GET)
   def query_parameters
-    $request.GET
+    $cuca.value[:request].GET
 #     $app.cgi.query_parameters
   end
   
   # accessor to the cgi request parameters (http POST)
   def request_parameters
-    $request.POST
+    $cuca.value[:request].POST
 #    $app.cgi.request_parameters
   end
   
   # an accessor to request_method
   def request_method
-    $request.request_method
+    $cuca.value[:request].request_method
 #    return $app.cgi.request_method
   end
 

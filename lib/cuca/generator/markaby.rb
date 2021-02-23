@@ -15,9 +15,9 @@ class ::Markaby::Builder		# :nodoc:
         c = Object::const_get(class_name+"Widget")
     else
         # try to find the widget in the action namespace
-        return old_method_missing(sym, *args,&block) if $app.nil?
+        return old_method_missing(sym, *args,&block) if $cuca.value[:app].nil?
         
-        am = $app.url_scan.action_module
+        am = $cuca.value[:url_scan].action_module
         if am.const_defined?(class_name+'Widget') then
            c = am.const_get(class_name+'Widget')
         else
@@ -45,7 +45,7 @@ module Cuca
 # content.
 # Visible within a generator function should be all instance variables, all instance
 # methods and an easy accessor to widgets defined on the root namespace and 
-# within the action namespace ($app.url_scan.action_namespace). For example the view and 
+# within the action namespace ($app.urlmap.action_namespace). For example the view and 
 # markaby generators that come with cuca you can call a widget like:
 #   Link(a,b,c..) { block}
 # and it will initialize the LinkWidget.

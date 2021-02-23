@@ -299,7 +299,7 @@ class Controller < Widget
  end
 
  def action_name
-   $app.url_scan.action
+   $cuca.value[:url_scan].action
  end
  
  private

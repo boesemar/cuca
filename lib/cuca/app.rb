@@ -1,16 +1,15 @@
 require 'logger'
 require 'cuca/config'
 require 'cuca/urlmap2'
+require 'concurrent'
 
+$cuca = Concurrent::ThreadLocalVar.new({})
 
 def cuca_register_autoload(object, file)
  autoload(object, file)
 end
 
-
 module Cuca
-
- 
 
 # Sandbox is used internally run the action script defined by the controller
 # In future this can be extended to implement some security features etc..
@@ -20,7 +19,7 @@ module Cuca
             self.class.send(:include, mod)
             controller_class = mod::const_get(controller_class_name)
             controller = controller_class.send(:new, :assigns=>assigns)
-            $controller_object = controller
+            $cuca.value[:controller_object] = controller
         
             controller.run_before_filters
             case request_method
@@ -70,19 +69,6 @@ module Cuca
             @@app_config
         end
 
-        #  private
-        #  def init_app(app_path: nil, log_path: nil, public_path: nil)
-        #    @app_path    = app_path || ($cuca_path + "/app")
-        #    @public_path = public_path || ($cuca_path + "/public")
-        #    @log_path    = log_path || ($cuca_path + "/log")
-        #    @app_path.freeze
-        #    @public_path.freeze
-        #    @log_path.freeze
-        #    @logger      = Logger.new("#{@log_path}/messages")
-        #    @logger.level = App.config['log_level'] || Logger::WARN
-        #  end
-
-
         # will do a 'require' on all .rb files in path
         def include_files(path)
             return unless File.exist?(path)
@@ -99,7 +85,7 @@ module Cuca
             path = node.value[:path]
             fn = path.scan(/.*\/(.*)\.rb/)[0][0]
             classname = naming_proc.call(fn)
-            $app.logger.debug "Scheduling Autoload Object #{classname.intern.inspect} ==> #{path}"
+            logger.debug "Scheduling Autoload Object #{classname.intern.inspect} ==> #{path}"
 
             cuca_register_autoload(classname.intern, clean_path(path))
         end
@@ -110,7 +96,6 @@ module Cuca
         end
 
         def initialize(app_path: nil, log_path: nil, public_path: nil, additional_support_directory:nil)
-            $app    = self
             @app_path    = app_path || ($cuca_path + "/app")
             @app_path = [@app_path] unless @app_path.kind_of?(Array)
             @public_path = public_path || ($cuca_path + "/public")
@@ -124,7 +109,6 @@ module Cuca
             @urlmap = Cuca::URLMap2.new do |config|
                 config.base_path = @app_path
             end
-
         end
 
         # this will yield all support directories from base path and if defined
@@ -143,17 +127,17 @@ module Cuca
 
         def load_support_files(scan_result)  # :nodoc:
             scan_result.path_tree.each do |pt|
-#                puts "load_support_files: #{pt.inspect}"
+                puts "load_support_files: #{pt.inspect}"
                 (App::config['include_directories'] || []).each do |id|
-#                    puts "...#{id}"
+                    puts "...#{id}"
                     dir = id[:dir]
                     pro = id[:class_naming]
             
                     load_path = pt.children.find { |c| c.name == dir }      # raw finder
-#                    puts "...found: #{load_path.inspect}"
+                    puts "...found: #{load_path.inspect}"
                     if load_path then
                         load_path.children.each do |file|
-#                            puts "...inside: #{file.inspect}"
+                            puts "...inside: #{file.inspect}"
                             next unless file.value[:type] == :file
                             if pro then 
                                 autoload_file(file, pro)
@@ -211,15 +195,15 @@ module Cuca
         end
 
         def rackcall(env, after_init:nil)
-            @env = env
-            $env = env
-            @request = Rack::Request.new(env)
-            $request = @request
+            $cuca.value = {}
+            $cuca.value[:app] = self
+            $cuca.value[:request] = Rack::Request.new(env)
+            $cuca.value[:env] = env
 
             #
             # 1st priority: Serve a file if it exists in the 'public' folder
             #
-            file = @public_path + '/' + @request.path_info
+            file = @public_path + '/' + $cuca.value[:request].path_info
             if File.exists?(file) && File.ftype(file) == 'file' then
                 require 'cuca/mimetypes'
                 mt = MimeTypes.new
@@ -234,30 +218,17 @@ module Cuca
             end
  
             begin 
-                url_scan = @urlmap.scan(@request.path_info)
-                @url_scan = url_scan
+                url_scan = @urlmap.scan($cuca.value[:request].path_info)
+                $cuca.value[:url_scan] = url_scan
             rescue RoutingError => e
                 err = get_error("Routing Error", e,
                 Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall Syntax Error"
                 return rack_response(404, {'content-type' => 'text/html'}, err)
             end
-   
-   # If config (urlmap) couldn't find a script then let's give up
-   # with a file-not-found 404 error
-#   if @urlmap.nil? then
-#      begin
-#       file = "#{@public_path}/#{Cuca::App.config['http_404']}"
-#       c = File.open(file).read
-#       return rack_response(404, {'content-type' => 'text/html'}, c)
-#      rescue => e
-#        return rack_response(404, {'content-type' => 'text/html'}, "404 - File not found!")
-#      end
-#      return
-#   end
  
             logger.info "RackCall on #{url_scan.url} - #{url_scan.script}"
-            script = url_scan.script
+            script = $cuca.value[:url_scan].script
  
             #
             # 2nd: Check if we have a script for requested action
@@ -267,7 +238,7 @@ module Cuca
             end
         
             # 3rd: Load additional files
-            load_support_files(url_scan)
+            load_support_files($cuca.value[:url_scan])
  
             # allow external code to be executed at this point
             if after_init then 
@@ -276,7 +247,7 @@ module Cuca
         
             # 4th: Now let's run the actual page script code
             if Cuca::App.config['controller_naming'] then
-                controller_class_name = Cuca::App.config['controller_naming'].call(urlk_scan.action)
+                controller_class_name = Cuca::App.config['controller_naming'].call($cuca.value[:url_scan].action)
             else
                 controller_class_name = url_scan.action.capitalize+"Controller"
             end
@@ -285,7 +256,7 @@ module Cuca
             Widget::clear_hints()
 
             # Load the code of the action into the module
-            controller_module = url_scan.action_module
+            controller_module = $cuca.value[:url_scan].action_module
  
  
             # things fail in this block get error logged and/or displayed in browser
@@ -307,8 +278,8 @@ module Cuca
                     
                 # run controller
                 (status, mime, content, headers) = Sandbox.run(controller_class_name,
-                                    url_scan.action_module, url_scan.assigns,
-                                    @request.request_method, url_scan.subcall)
+                                    controller_module, $cuca.value[:url_scan].assigns,
+                                    $cuca.value[:request].request_method, $cuca.value[:url_scan].subcall)
 
                 logger.debug "RackCall OK: #{status}/#{mime}"
 

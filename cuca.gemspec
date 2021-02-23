@@ -3,7 +3,7 @@ require 'rubygems'
 SPEC = Gem::Specification.new do |s|
 
  s.name		= 'cuca'
- s.version	= '0.21'
+ s.version	= '0.22'
  s.author	= 'Martin Boese'
  s.email	= 'mboese@mailbox.org'
  s.rubyforge_project = 'cuca'
@@ -27,6 +27,7 @@ supports pretty URL's, layouts, sessions and the rendering of 'partials'.
  s.rdoc_options  << '--main' << 'README'
  s.extra_rdoc_files = %w{CHANGELOG README.md}
  s.add_dependency('markaby', '~>0.8')
+ s.add_dependency('concurrent-ext', '~>1.1')
 #  s.add_dependency('fcgi', '>=0.8.7')
 end
  
