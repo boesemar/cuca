@@ -88,13 +88,11 @@ module Cuca
         
           # scan a user path
         def scan(url)
-            split_url_all = url.split('/')
-            split_url = split_url_all.first == '' ? split_url_all[1..-1] : split_url_all
-            split_url = split_url.map { |u| Tree::Node.new(u, value: {:type => :directory})  }
+            split_url_raw = url.split('/').find_all { |e| e!='' }
+            split_url = split_url_raw.map { |u| Tree::Node.new(u, value: {:type => :directory})  }
             if url[-1] != '/' then 
                 split_url.last.value = {:type => :file}
             end
-            
             match = @tree.root.scan_path(split_url)            
             if !match then 
                 raise RoutingError, "Can not find path in tree #{url}"
@@ -127,7 +125,7 @@ module Cuca
             result.assigns = assigns
             result.script = node.value[:path]
             result.action ||= split_url.last.name
-            result.base_url = split_url_all[0..-2].join('/')
+            result.base_url = split_url_raw.join('/')
             result.action_module = make_module(result.base_url)
             
             p = node
