@@ -24,8 +24,15 @@ module Cuca
                 b.name == a.name
             end
 
-            @@find_order = lambda do |a|
-                a.name
+            # make sure that __name-type directorys are treated last
+            @@file_sorter = lambda do |a,b|
+                next 1 if a.name[0] == '_' && b.name[0] != '_'
+                next -1 if a.name[0] != '_' && b.name[0] == '_'
+                next 0
+            end
+
+            def children_sorted
+                @children.sort(&@@file_sorter)
             end
 
             def to_node(x)
@@ -54,6 +61,7 @@ module Cuca
                 end
                 node.parent = self
                 @children << node
+                @children = children_sorted
             end        
             def level
                 x = 0
