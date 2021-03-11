@@ -74,7 +74,7 @@ module Cuca
         end
 
         def make_module(path)
-            const_name = "Appmod_#{path.gsub(/[\/\\\-]/, '_')}"
+            const_name = "Appmod_#{path.gsub(/[\/\\\-\.]/, '_')}"
             
             if Cuca::Objects::const_defined?(const_name.intern) then
               return Cuca::Objects::const_get(const_name.intern)
@@ -126,7 +126,7 @@ module Cuca
             result.script = node.value[:path]
             result.action ||= split_url.last.name
             result.base_url = split_url_raw.join('/')
-            result.action_module = make_module(result.base_url)
+            result.action_module = make_module(node.value[:base_path]) ## result.base_url)
             
             p = node
             pt = []
