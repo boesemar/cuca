@@ -199,7 +199,7 @@ module Cuca
             #
             # 1st priority: Serve a file if it exists in the 'public' folder
             #
-            file = @public_path + '/' + $cuca.value[:request].path_info
+            file = @public_path + '/' + Rack::Utils.unescape($cuca.value[:request].path_info)
             if File.exists?(file) && File.ftype(file) == 'file' then
                 require 'cuca/mimetypes'
                 mt = MimeTypes.new
