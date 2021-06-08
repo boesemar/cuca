@@ -55,21 +55,31 @@ module Cuca
 
         end
 
+        # this will add an app-directory to the @tree
         def add_directory(path)
-            Dir.glob("#{path}/**/*").each do |file|
-                next if !File.directory?(file) and file !~ /\.rb$/
-                part_file = file[path.size+1..-1]
-                part_file_split = part_file.split('/')
-                node_array = part_file_split.map do |e|
-                    full_path = "#{path}/#{part_file}"
-                    if File.directory?(full_path) then 
-                        Tree::Node.new(e, value: { :type => :directory, :path=>full_path, :base_path => part_file } )
-                    else
-                        e = e[0..-4] if e =~ /\.rb$/
-                        Tree::Node.new(e, value: { :type => :file, :path => full_path, :base_path => part_file } )
-                    end
+            def path2nodes(p, base_path)
+                part_path_a = []
+                nodes = p.split('/').map do |n| 
+                    part_path_a << n
+                    part_path = part_path_a.join('/')
+                    n = n[0..-4] if n =~ /\.rb$/
+                    Tree::Node.new(n, value: { :type => :directory, :path=>"#{base_path}/#{part_path}", :base_path => part_path } )
                 end
-                @tree.root.add_nodes_r(node_array)
+                if !File.directory?("#{base_path}/#{p}") then #p.split('/').last[-1] != '/' then 
+                    nodes[-1].value[:type] = :file
+                end
+                nodes
+            end
+
+            file_list = []
+            Dir.glob("#{path}/**/*").each do |file|
+                next if !File.directory?(file) && file !~ /\.rb$/
+                part_file = file[path.size+1..-1]
+                file_list << part_file
+            end
+            file_list = file_list.sort { |d| d.count('/') }
+            file_list.each do |f|
+                @tree.root.add_nodes_r(path2nodes(f, path))
             end
         end
 

@@ -28,7 +28,17 @@ class URLMapTest < Test::Unit::TestCase
    
         sr = u.scan('/test')        # app2 overrides /test not not here!
         assert sr.script.include?('/test_app/')
+
+        assert_raise Cuca::RoutingError do 
+             u.scan('/') # there's no app/index.rb
+        end
+
+
+        sr = u.scan('/user/martin/')
+        assert_equal 'index', sr.action
+
     end
+
 
     def test_override
         u = Cuca::URLMap2.new do |config|
