@@ -84,9 +84,8 @@ module Cuca
             Cuca::Objects::const_set(const_name.intern, m)
             return m
         end
-       
-        
-          # scan a user path
+         
+        # scan a user path
         def scan(url)
             split_url_raw = url.split('/').find_all { |e| e!='' }
             split_url = split_url_raw.map { |u| Tree::Node.new(u, value: {:type => :directory})  }

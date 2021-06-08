@@ -55,7 +55,7 @@ module Cuca
     class App
 
 
-        attr_reader :app_path, :log_path, :public_path, :url_scan, :cgi, :logger
+        attr_reader :app_path, :log_path, :public_path, :url_scan, :cgi, :logger, :urlmap
         def logger=(log); @logger = log ; end
         @@app_config = Cuca::Config.new
 

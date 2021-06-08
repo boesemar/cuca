@@ -1,6 +1,6 @@
 #
 # This is a generic tree data structure, it will allow Urlmap2 to build a directory trees,
-# perform searches and merge trees etc.. See demo code below.
+# perform searches and merge trees etc.. See demo code in tests/tree.rb.
 # It can search by wildcard and can overwrite/replace branches with a separate function (@@update_compare @@find_compare)
 #
 
@@ -136,6 +136,7 @@ module Cuca
                 find_path_with_method(path, :find)
             end
 
+            # scan a path and return node and assignes found
             def scan_path(path)
                 assigns = {}
                 node = self
@@ -167,7 +168,7 @@ module Cuca
                     x = cnode.find_child_to_update(n) 
                     if x then
                         x.name = n.name
-#                        x.value = n.value
+                        x.value = n.value
                         cnode = x                    
                     else
                         cnode << n
@@ -175,6 +176,15 @@ module Cuca
                     end
                 end
                 cnode
+            end
+
+            # walk to root element
+            def root
+                n = self
+                while n.parent 
+                    n = n.parent
+                end
+                n
             end
         end
 
@@ -197,28 +207,43 @@ if __FILE__ == $0  then
     include Cuca
 
     Tree::Node.update_compare = lambda do |a,b|
-        b_name = b.instance_of?(String) ? b : b.name
-        return true if b_name[0..1] == '__' && a.name[0..1] == '__'
-        b.instance_of?(String) ? a.name == b : b.name == a.name
+        return true if b.name[0..1] == '__' && a.name[0..1] == '__'
+        b.name == a.name
     end
 
-    Tree::Node.find_compare = lambda do |a,b|
-        b_name = b.instance_of?(String) ? b : b.name
-        if a.name[0..1] == '__' then 
-           return { a.name[2..-1] => b }    
+    Tree::Node.find_compare = lambda do |a,b|                
+        if a.name[0..1] == '__' && b.value[:type] == :directory then 
+           return { a.name[2..-1] => b.name }    
         end
-        if b_name =~ /^\-(.*)\-(.*)$/ then 
-            action = $2
+        if b.name =~ /^\-(.*)\-(.*)$/ then 
+            action = $1
             return (a.name == action)
         end
-        b.instance_of?(String) ? a.name == b : b.name == a.name
+        b.name == a.name
     end
-    
+
+
+    node_tree = %w{ customer __hid }.map do |n|
+      Tree::Node.new(n, value: "(Some value for #{n})")
+    end
+    node_tree2 = %w{ customer __hid stuff }.map do |n|
+      Tree::Node.new(n, value: "(Some value for #{n})")
+    end
+      
     
     t = Tree.new 
     t.root << Tree::Node.new("customer", value:"Some data")
     t.root << Tree::Node.new("users", value:"Some data")
-    
+
+    t.root.add_nodes_r(%w{ customer __hid edit something })
+    t.root.add_nodes_r(node_tree)
+    t.root.add_nodes_r(node_tree2)
+
+    puts t.to_s
+    exit
+    t.root.add_nodes_r(%w{ })
+
+
     t.root.find_path(['users']) << Tree::Node.new('add', value: "Add a user")
     puts "User add is at level: " + t.root.find_path(['users', 'add']).level.to_s
     # puts t.to_s
