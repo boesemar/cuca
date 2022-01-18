@@ -108,12 +108,10 @@ module Cuca
 
 
             #Custom exceptions logger
-            if App.config['exceptions_log'] then
-                @exception_logger = Logger.new("#{@log_path}/exceptions") 
-                @exception_logger.level = Logger::ERROR
-                @exception_logger.formatter = proc do |severity, datetime, progname, msg|
-                    "#{msg}"
-                end
+            @exception_logger = Logger.new((App.config['exceptions_log'] ? "#{@log_path}/exceptions" : "/dev/null")) 
+            @exception_logger.level = Logger::ERROR
+            @exception_logger.formatter = proc do |severity, datetime, progname, msg|
+                "#{msg}"
             end
 
             @additional_support_directory = clean_path(additional_support_directory) if additional_support_directory
@@ -309,7 +307,7 @@ module Cuca
                 err = get_error("Syntax Error", e,
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall Syntax Error"
-                exception_logger.error get_exception_log_message(e, "Syntax Error") if exception_logger
+                exception_logger.error get_exception_log_message(e, "Syntax Error")
                 return rack_response(500, {}, err)
  
  
@@ -318,14 +316,14 @@ module Cuca
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
  
                 logger.info "CGICall Application Error"
-                exception_logger.error get_exception_log_message(e, "Application Error") if exception_logger
+                exception_logger.error get_exception_log_message(e, "Application Error")
                 return rack_response(500, {'content-type' => 'text/html'}, err)
  
             rescue => e
                 err = get_error("System Error", e,
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall System Error"
-                exception_logger.error get_exception_log_message(e, "Uncaught") if exception_logger
+                exception_logger.error get_exception_log_message(e, "Uncaught")
                 
                 return rack_response(500, {'content-type' => 'text/html'}, err)
             
