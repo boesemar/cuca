@@ -106,12 +106,11 @@ module Cuca
             @logger      = Logger.new("#{@log_path}/messages")
             @logger.level = App.config['log_level'] || Logger::WARN
 
+            @exception_logger = Logger.new('/dev/null')
 
-            #Custom exceptions logger
-            @exception_logger = Logger.new((App.config['exceptions_log'] ? "#{@log_path}/exceptions" : "/dev/null")) 
-            @exception_logger.level = Logger::ERROR
-            @exception_logger.formatter = proc do |severity, datetime, progname, msg|
-                "#{msg}"
+            if App.config['exception_log'] then
+                raise "Exception_log needs to be kind of Logger" unless App.config['exception_log'].kind_of?(Logger)
+                @exception_logger = App.config['exception_log']
             end
 
             @additional_support_directory = clean_path(additional_support_directory) if additional_support_directory
@@ -197,16 +196,6 @@ module Cuca
 
         def rack_response(code, headers, content)
             [code, sanitize_headers(headers), [content]]
-        end
-
-        def get_exception_log_message(e, type) 
-            msg = "[EXCEPTION] date=[#{Time.now.strftime("%Y-%m-%d %H:%M:%S")}] "
-            msg << "type=[#{type}] "
-            msg << "user=[#{$cuca.value[:request].env['rack.session']['user'] rescue ""}] "
-            msg << "url=[#{$cuca.value[:request].env['HTTP_HOST'] rescue ""}#{$cuca.value[:request].env['REQUEST_PATH'] rescue ""}] "
-            msg << "message=[#{e.inspect}]\n"
-
-            return msg
         end
 
         def rackcall(env, after_init:nil)
@@ -307,7 +296,7 @@ module Cuca
                 err = get_error("Syntax Error", e,
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall Syntax Error"
-                exception_logger.error get_exception_log_message(e, "Syntax Error")
+                exception_logger.error [e, "Syntax Error"]
                 return rack_response(500, {}, err)
  
  
@@ -316,14 +305,14 @@ module Cuca
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
  
                 logger.info "CGICall Application Error"
-                exception_logger.error get_exception_log_message(e, "Application Error")
+                exception_logger.error [e, "Application Error"]
                 return rack_response(500, {'content-type' => 'text/html'}, err)
  
             rescue => e
                 err = get_error("System Error", e,
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall System Error"
-                exception_logger.error get_exception_log_message(e, "Uncaught")
+                exception_logger.error [e, "System Error"]
                 
                 return rack_response(500, {'content-type' => 'text/html'}, err)
             
