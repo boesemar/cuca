@@ -23,13 +23,22 @@ class GeneratorContext
       c = nil
       # 2nd try to find a widget
       if Object.const_defined?(class_name+'Widget') then
-           c = Object::const_get(class_name+'Widget')
+           c = Object::const_get(class_name+"Widget")
       else
-           # ...try to find in action namespace
-           mod = $app.urlmap.action_module
-           c = mod.const_get(class_name+'Widget') if mod.const_defined?(class_name+'Widget')
-      end
+        # try to find the widget in the action namespace
+        return old_method_missing(sym, *args,&block) if $cuca.value[:app].nil?
+        
+        am = $cuca.value[:url_scan].action_module
+        if am.const_defined?(class_name+'Widget') then
+           c = am.const_get(class_name+'Widget')
+        else
+           return old_method_missing(sym, *args, &block)
+        end
+    end
          
+
+
+
       raise NameError.new "Undefined method: #{class_name}" unless c
  
       widget = c.new({:args => args,
