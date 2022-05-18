@@ -55,7 +55,7 @@ module Cuca
     class App
 
 
-        attr_reader :app_path, :log_path, :public_path, :url_scan, :cgi, :logger, :urlmap
+        attr_reader :app_path, :log_path, :public_path, :url_scan, :cgi, :logger, :urlmap, :exception_logger
         def logger=(log); @logger = log ; end
         @@app_config = Cuca::Config.new
 
@@ -105,6 +105,14 @@ module Cuca
             @log_path.freeze
             @logger      = Logger.new("#{@log_path}/messages")
             @logger.level = App.config['log_level'] || Logger::WARN
+
+            @exception_logger = Logger.new('/dev/null')
+
+            if App.config['exception_log'] then
+                raise "Exception_log needs to be kind of Logger" unless App.config['exception_log'].kind_of?(Logger)
+                @exception_logger = App.config['exception_log']
+            end
+
             @additional_support_directory = clean_path(additional_support_directory) if additional_support_directory
             @urlmap = Cuca::URLMap2.new do |config|
                 config.base_path = @app_path
@@ -288,6 +296,7 @@ module Cuca
                 err = get_error("Syntax Error", e,
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall Syntax Error"
+                exception_logger.error [e, "Syntax Error"]
                 return rack_response(500, {}, err)
  
  
@@ -296,12 +305,15 @@ module Cuca
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
  
                 logger.info "CGICall Application Error"
+                exception_logger.error [e, "Application Error"]
                 return rack_response(500, {'content-type' => 'text/html'}, err)
  
             rescue => e
                 err = get_error("System Error", e,
                         Cuca::App.config['display_errors'], Cuca::App.config['http_500'])
                 logger.info "CGICall System Error"
+                exception_logger.error [e, "System Error"]
+                
                 return rack_response(500, {'content-type' => 'text/html'}, err)
             
             end #rescue block
