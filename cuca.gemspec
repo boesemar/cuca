@@ -3,7 +3,7 @@ require 'rubygems'
 SPEC = Gem::Specification.new do |s|
 
  s.name		= 'cuca'
- s.version	= '0.29'
+ s.version	= '0.30'
  s.author	= 'Martin Boese'
  s.email	= 'mboese@mailbox.org'
  s.rubyforge_project = 'cuca'
@@ -26,8 +26,7 @@ supports pretty URL's, layouts, sessions and the rendering of 'partials'.
 # s.autorequire	= 'cuca'
  s.rdoc_options  << '--main' << 'README'
  s.extra_rdoc_files = %w{CHANGELOG README.md}
- s.add_dependency('markaby', '~>0.8')
+ s.add_dependency('markaby', '~>9')
  s.add_dependency('concurrent-ruby', '~>1')
-#  s.add_dependency('fcgi', '>=0.8.7')
 end
  

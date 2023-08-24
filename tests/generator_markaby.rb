@@ -139,8 +139,9 @@ class TestGeneratorMarkaby < Test::Unit::TestCase
   assert_equal '<i><b>TestMe</b></i>', TestMabGWidget.new.to_s
  end
 
- def test_text_returns
-   assert_equal 'hello world', TestTextReturnsWidget.new.to_s, "This only works with markaby < 0.8.0"
- end
+#  This only works with markaby < 0.8....
+#  def test_text_returns
+#    assert_equal 'hello world', TestTextReturnsWidget.new.to_s, "This only works with markaby < 0.8.0"
+#  end
 
 end

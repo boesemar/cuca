@@ -5,29 +5,31 @@ require 'markaby'
 class ::Markaby::Builder		# :nodoc:
   alias :old_method_missing :method_missing
 
-  def method_missing(sym, *args, &block )	# :nodoc:
+  def method_missing(sym, *args, **kwargs, &block )	# :nodoc:
+    
     class_name = sym.id2name  
 
-    return old_method_missing(sym, *args, &block) if 
+    return old_method_missing(sym, *args, **kwargs, &block) if 
         (class_name[0].chr.upcase != class_name[0].chr) 
     
     if Object.const_defined?(class_name+'Widget') then
         c = Object::const_get(class_name+"Widget")
     else
         # try to find the widget in the action namespace
-        return old_method_missing(sym, *args,&block) if $cuca.value[:app].nil?
+        return old_method_missing(sym, *args, **kwargs, &block) if $cuca.value[:app].nil?
         
         am = $cuca.value[:url_scan].action_module
         if am.const_defined?(class_name+'Widget') then
            c = am.const_get(class_name+'Widget')
         else
-           return old_method_missing(sym, *args, &block)
+           return old_method_missing(sym, *args, **kwargs, &block)
         end
     end
 
 #    $stderr.puts "Widget in markaby: Class: #{class_name}, \n\n assigns: #{@assigns.inspect} \n\n"
 
     widget = c.new({:args => args,
+                    :kwargs => kwargs,
                     :assigns => @assigns },
                     &block)
 

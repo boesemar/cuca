@@ -143,6 +143,7 @@ class Widget
   def initialize(params = {}, &block)
    @_assigns = params[:assigns] || {} 
    @_args = params[:args] || {}
+   @_kwargs = params[:kwargs] || {}
    @_profiler = params[:profiler] || nil
    @_block = block
    @_content = ""
@@ -191,7 +192,7 @@ class Widget
        Profiler__::start_profile
     end
        
-    output(*@_args, &@_block)
+    output(*@_args, **@_kwargs, &@_block)
     before_to_s if self.respond_to?(:before_to_s)
     out = @_content.to_s
 

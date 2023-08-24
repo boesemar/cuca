@@ -153,6 +153,15 @@ module Cuca
             err << "<b>#{exception.class.to_s}: #{CGI::escapeHTML(exception.to_s)}</b><br/><br/>"
 #           $stderr.puts "ERROR: #{title} - #{exception.class.to_s}: #{exception.to_s}"
             if (show_trace) then
+                us = $cuca.value[:url_scan]
+                if us then 
+                    err+="<br>"
+                    err+="URL: #{us.url}<br>"
+                    err+="Script: #{us.script}<br>"
+                    err+="Action: #{us.action}<br>"
+                    err+="Assigns: #{us.assigns.inspect}<br>"
+                    err+="<br>"
+                end
                 exception.backtrace.each do |b|
 #                   $stderr.puts "   #{b}"
                     err +="<br/>#{b}"
@@ -200,7 +209,7 @@ module Cuca
             # 1st priority: Serve a file if it exists in the 'public' folder
             #
             file = @public_path + '/' + Rack::Utils.unescape($cuca.value[:request].path_info)
-            if File.exists?(file) && File.ftype(file) == 'file' then
+            if File.exist?(file) && File.ftype(file) == 'file' then
                 require 'cuca/mimetypes'
                 mt = MimeTypes.new
                 file_content = File.open(file) { |f| f.read }
@@ -215,6 +224,7 @@ module Cuca
  
             begin 
                 url_scan = @urlmap.scan($cuca.value[:request].path_info)
+
                 $cuca.value[:url_scan] = url_scan
             rescue RoutingError => e
                 err = get_error("Routing Error", e,
@@ -229,7 +239,7 @@ module Cuca
             #
             # 2nd: Check if we have a script for requested action
             #
-            if (!File.exists?(script)) then
+            if (!File.exist?(script)) then
               return [500, {}, ["Script not found: #{script}"]]
             end
         

@@ -119,7 +119,7 @@ module Cuca
                 end
                 node = index    
                 result.action = 'index'
-            else
+            else                
                 # sucalls
                 if split_url.last.name =~ /^\-(.*)\-(.*)$/ then 
                     result.action = $1
@@ -147,7 +147,7 @@ module Cuca
             
             result.path_tree = pt
 
-            last_part = split_url.last
+            last_part = split_url.last ? split_url.last.name : ''
             if last_part =~ /^\-(.*)\-(.*)$/ then 
                 result.subcall = $2
                 result.action = $1
