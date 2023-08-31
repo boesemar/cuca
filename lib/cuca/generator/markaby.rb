@@ -71,12 +71,7 @@ module Generator
 #
 # For more information of Markaby pls see the markaby website.
 #
-# === Performance Warning
-#
-# Unfortunately Markaby is not famous to be fast. Using it on recuring widgets 
-# can significantly slow down your application.
-# 
-#
+
 module Markaby
    # use this to add markaby code to @content
   def mab(&block)
