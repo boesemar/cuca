@@ -177,6 +177,12 @@ module Cuca
 
 
         def status2code(cgi_status)
+            return cgi_status if cgi_status.instance_of?(Integer)
+
+            if cgi_status =~ /[0-9]{3}/ then
+                return cgi_status.to_i
+            end
+
             x = CGI::HTTP_STATUS[cgi_status]
             x||= "500 unknown status: #{cgi_status.inspect}"
             x.split(' ').first.to_i
