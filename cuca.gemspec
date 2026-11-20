@@ -3,14 +3,14 @@ require 'rubygems'
 SPEC = Gem::Specification.new do |s|
 
  s.name		= 'cuca'
- s.version	= '0.31'
+ s.version	= '0.32'
  s.author	= 'Martin Boese'
  s.email	= 'mboese@mailbox.org'
- s.rubyforge_project = 'cuca'
  s.homepage	= 'https://github.com/boesemar/cuca'
  s.platform	= Gem::Platform::RUBY
  s.summary	= 'A widget-based web framework'
  s.license      = 'MIT'
+ s.required_ruby_version = '>= 3.2'
  s.description = <<-EOD
 Cuca is a light web development framework for Ruby/Rack. It has 
 a widget-bases approach to reuse functionality and does not stricktly implement an MVC architecture, 
@@ -24,9 +24,14 @@ supports pretty URL's, layouts, sessions and the rendering of 'partials'.
  s.executables  = ['cuca']
  s.require_path	= 'lib'
 # s.autorequire	= 'cuca'
- s.rdoc_options  << '--main' << 'README'
+ s.rdoc_options  << '--main' << 'README.md'
  s.extra_rdoc_files = %w{CHANGELOG README.md}
  s.add_dependency('markaby', '~>0.9')
  s.add_dependency('concurrent-ruby', '~>1')
+ s.add_dependency('builder', '~>3.2')
+ s.add_dependency('logger', '~>1')
+ s.add_dependency('ostruct', '~>0.6')
+ s.add_development_dependency('rake', '~>13')
+ s.add_development_dependency('test-unit', '~>3')
 end
  

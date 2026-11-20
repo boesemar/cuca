@@ -190,7 +190,7 @@ class App
   # 1st priority: Serve a file if it exists in the 'public' folder
   #
   file = @public_path + '/' + @cgi.path_info
-  if File.exists?(file) && File.ftype(file) == 'file' then
+  if File.exist?(file) && File.ftype(file) == 'file' then
     require 'cuca/mimetypes'
     mt = MimeTypes.new
     f = File.new(file)
@@ -224,7 +224,7 @@ class App
   #
   # 2nd: Check if we have a script for requested action
   #
-  if (!File.exists?(script)) then
+  if (!File.exist?(script)) then
     @cgi.out { "Script not found: #{script}" }
     return
   end

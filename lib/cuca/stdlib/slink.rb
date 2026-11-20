@@ -23,7 +23,7 @@ class SLinkWidget < Cuca::Widget
    @attribs = tag_attrib
    @attribs[:href] = build_href(target, params) 
   
-   @_content = "<a "
+   @_content = +"<a "
    @attribs.each_pair do |k,v| 
       @_content << "#{k}='#{v}'"
    end

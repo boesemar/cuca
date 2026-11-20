@@ -146,7 +146,7 @@ class Widget
    @_kwargs = params[:kwargs] || {}
    @_profiler = params[:profiler] || nil
    @_block = block
-   @_content = ""
+   @_content = +""
 
    @@_hints ||= {}
   end
@@ -158,24 +158,24 @@ class Widget
     a = @_assigns.clone
 
     self.instance_variables.each do |v|
-      vs = v.to_s
-      next if vs.match(/^\@\_/)
-      next if vs.include?('cancel_execution')		# this is some internal key
-      a[vs.gsub(/\@/,'')] = self.instance_variable_get(v)
+      next if v == :@cancel_execution		# this is some internal key
+      vs = v.name
+      next if vs.start_with?('@_')
+      a[vs[1..-1]] = self.instance_variable_get(v)
     end
     a
   end
 
   # clear widgets generated content
   def clear
-   @_content = ""
+   @_content = +""
   end
 
 
   # Overwrite this method with a function that takes the arguments and optionally
   # a block as you like.
   def output(*args, &block)
-    @_content = "This widget doesnt have any content"
+    @_content = +"This widget doesnt have any content"
   end
 
   
@@ -187,9 +187,15 @@ class Widget
 
   # get cleartext for the widget
   def to_s
-    if @_profiler then 
-       require 'profiler'
-       Profiler__::start_profile
+    if @_profiler then
+       begin
+          require 'profiler'      # removed from stdlib in ruby 2.7 - needs the 'profiler' gem
+          Profiler__::start_profile
+       rescue LoadError
+          $stderr.puts "cuca: profiling disabled, 'profiler' library not available" unless @@_profiler_warned ||= false
+          @@_profiler_warned = true
+          @_profiler = nil
+       end
     end
        
     output(*@_args, **@_kwargs, &@_block)

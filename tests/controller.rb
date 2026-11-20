@@ -115,7 +115,7 @@ end
 class ChainAController < Cuca::Controller
   before_filter 'a', 1
   def a
-    @out ||= ''
+    @out ||= +''
     @out << 'a'
   end
 end
@@ -124,7 +124,7 @@ end
 class ChainBController < ChainAController
   before_filter 'b',100
   def b
-    @out ||= ''
+    @out ||= +''
     @out << 'b'
   end
 end
@@ -133,7 +133,7 @@ class ChainCController < ChainBController
   before_filter 'c',2
   attr :out
   def c
-    @out ||= ''
+    @out ||= +''
     @out << 'c'
   end
 end

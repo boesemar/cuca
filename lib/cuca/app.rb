@@ -125,14 +125,37 @@ module Cuca
             end
         end
 
+        # mime type table for static files, built once
+        def self.mime_types
+            @mime_types ||= begin
+                require 'cuca/mimetypes'
+                MimeTypes.new.freeze
+            end
+        end
+
+        # resolve a request path to a regular file inside public_path, or nil.
+        # The expanded path must stay below public_path (no '..' traversal).
+        def public_file(request_path)
+            @public_root ||= File.expand_path(@public_path) + '/'
+            file = File.expand_path(@public_root + request_path)
+            return nil unless file.start_with?(@public_root)
+            return nil unless File.file?(file)
+            file
+        rescue ArgumentError    # e.g. null byte in path
+            nil
+        end
+
         def load_support_files(scan_result)  # :nodoc:
+            # support directories are tree nodes that live as long as the app, so
+            # their files only need to be scheduled for autoload once
+            @registered_support_dirs ||= {}.compare_by_identity
             scan_result.path_tree.each do |pt|
                 (App::config['include_directories'] || []).each do |id|
                     dir = id[:dir]
                     pro = id[:class_naming]
-            
+
                     load_path = pt.children.find { |c| c.name == dir }      # raw finder
-                    if load_path then
+                    if load_path && !@registered_support_dirs[load_path] then
                         load_path.children.each do |file|
                             next unless file.value[:type] == :file
                             if pro then 
@@ -142,6 +165,8 @@ module Cuca
                                 include_files(file.value[:path])
                             end
                         end
+                        # mark only after scheduling, so a concurrent request never skips half-registered dirs
+                        @registered_support_dirs[load_path] = true
                     end
                 end
             end
@@ -214,15 +239,13 @@ module Cuca
             #
             # 1st priority: Serve a file if it exists in the 'public' folder
             #
-            file = @public_path + '/' + Rack::Utils.unescape($cuca.value[:request].path_info)
-            if File.exist?(file) && File.ftype(file) == 'file' then
-                require 'cuca/mimetypes'
-                mt = MimeTypes.new
-                file_content = File.open(file) { |f| f.read }
-                extension = file.scan(/.*\.(.*)$/)[0][0] if file.include?('.')
-                extension ||= 'html'
-                mime = mt[extension] || 'text/html'
-                return rack_response(200, 
+            file = public_file(Rack::Utils.unescape($cuca.value[:request].path_info))
+            if file then
+                file_content = File.binread(file)
+                extension = File.extname(file)[1..-1]
+                extension = 'html' if extension.nil? || extension.empty?
+                mime = App.mime_types[extension] || 'text/html'
+                return rack_response(200,
                     { 'type' => mime, 
                     'expires' => (Time.now+App.config['http_static_content_expires']).to_s }, 
                     file_content)

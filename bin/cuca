@@ -26,7 +26,7 @@ Dir.glob("#{framework_path}/**/*").each do |file|
  fname = file[framework_path.length..-1]
  dname = "#{appname}/#{fname}"
 
- if File.exists?(dname) then
+ if File.exist?(dname) then
    puts "(exists)  #{fname}"
    next
  end
